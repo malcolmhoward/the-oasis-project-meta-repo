@@ -1,0 +1,25 @@
+[submodule "repos/mirage"]
+	path = repos/mirage
+	url = https://github.com/malcolmhoward/mirage.git
+[submodule "repos/dawn"]
+	path = repos/dawn
+	url = https://github.com/malcolmhoward/dawn.git
+[submodule "repos/spark"]
+	path = repos/spark
+	url = https://github.com/malcolmhoward/spark.git
+[submodule "repos/aura"]
+	path = repos/aura
+	url = https://github.com/malcolmhoward/aura.git
+[submodule "repos/beacon"]
+	path = repos/beacon
+	url = https://github.com/malcolmhoward/beacon.git
+[submodule "repos/genesis"]
+	path = repos/genesis
+	url = https://github.com/malcolmhoward/genesis.git
+[submodule "repos/project-foundation-template"]
+	path = repos/project-foundation-template
+	url = https://github.com/malcolmhoward/project-foundation-template.git
+	branch = feat/v3.7.0-generation-log
+[submodule "repos/github-pages"]
+	path = repos/github-pages
+	url = https://github.com/malcolmhoward/The-OASIS-Project.github.io.git
