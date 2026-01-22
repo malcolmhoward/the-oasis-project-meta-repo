@@ -88,14 +88,41 @@ This repository is under active development. Currently implemented:
 
 - [x] Component repository submodules
 - [x] Claude LLM integration guide (`CLAUDE.md`)
+- [x] Directory structure for coordination
 
 Coming soon:
 
-- [ ] Directory structure for coordination
 - [ ] Foundation templates for repo standardization
 - [ ] Hardware guides (platform comparison, costs)
 - [ ] Getting started guides per platform
 - [ ] Docker orchestration
+
+## Repository Structure
+
+```
+scope/
+├── README.md                    # This file
+├── CLAUDE.md                    # LLM integration guide
+├── LICENSE                      # GPL v3
+├── coordination/
+│   ├── roadmaps/               # Per-repo roadmaps (planned)
+│   ├── dependencies/           # Cross-repo dependencies (planned)
+│   └── decisions/adr/          # Architecture decisions (planned)
+├── getting-started/
+│   ├── raspberry-pi/           # Pi setup guide (planned)
+│   ├── orin-nano/              # Orin setup guide (planned)
+│   └── jetson-nx/              # Jetson setup guide (planned)
+├── journey/                    # Community build stories (planned)
+├── repos/                      # Component submodules
+│   ├── mirage/
+│   ├── dawn/
+│   ├── spark/
+│   ├── aura/
+│   ├── beacon/
+│   ├── genesis/
+│   └── project-foundation-template/
+└── scripts/                    # Automation scripts (planned)
+```
 
 ## Feature Matrix
 
