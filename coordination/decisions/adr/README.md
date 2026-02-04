@@ -37,6 +37,23 @@ ADR files use the format `NNNN-short-title.md`:
 4. **Accept** - Update `Status: Accepted` and set decision date
 5. **Maintain** - Update Change History as implementation evolves
 
+### When to Move from Draft to Proposed
+
+Move an ADR to the formal location (`coordination/decisions/adr/`) **when it begins guiding implementation**, not after implementation is complete.
+
+| Timing | Rationale |
+|--------|-----------|
+| **Before/during implementation** | ADR appears in commit history alongside the work it guided; demonstrates decision-driven development |
+| **After implementation** | Loses traceability; appears as retroactive documentation rather than guiding document |
+
+**Benefits of early formalization:**
+- Git history shows the ADR preceded or accompanied implementation
+- Future readers can see decisions drove the work, not vice versa
+- `Status: Proposed` still indicates the ADR awaits formal approval
+- ADR can evolve during implementation (tracked via Change History)
+
+**The `Status: Proposed` field signals the ADR is not yet approved**, so moving it early does not imply finality. The formal location indicates the ADR is actively guiding decisions, while the status indicates approval state.
+
 ## ADR Format
 
 Each ADR follows this structure:
@@ -56,6 +73,8 @@ Each ADR follows this structure:
 |-----|-------|--------|------|
 | [0001](0001-project-governance.md) | Project Governance | Proposed | TBD |
 | [0002](0002-github-infrastructure.md) | GitHub Infrastructure Standards | Proposed | TBD |
+| [0003](0003-hardware-mocking.md) | Hardware Mocking | Proposed | TBD |
+| [0004](0004-documentation-infrastructure.md) | Documentation Infrastructure | Proposed | TBD |
 
 ## Creating New ADRs
 
