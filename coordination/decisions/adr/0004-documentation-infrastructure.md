@@ -163,62 +163,78 @@ cp github-pages/docs/mirage.md repos/mirage/docs/guide.md
 
 ### Documentation Versioning Strategy
 
-Documentation improvements follow a linear milestone progression with tagged versions marking key states. This allows comparing different documentation states and reviewing improvements incrementally.
+Documentation improvements follow a milestone progression where each milestone is developed on its own branch, enabling independent deployment, incremental review, and natural comparison via GitHub's branch diff UI.
 
-#### Milestone Tags
+#### Milestone Branches
 
-Use tags on a single branch to mark documentation milestones:
+Each documentation milestone gets its own feature branch and PR:
 
 ```
-feat/github-pages/<issue>-foundation-files
-├── current state ← tag: docs-v1-baseline-rollup
-├── ... gap-fill commits ...
-├── gap-fill complete ← tag: docs-v2-gap-filled
-├── ... external standard commits ...
-└── external standard complete ← tag: docs-v3-external-standard
+main
+├── feat/github-pages/<issue>-baseline-rollup        → PR #1: Baseline
+│   (merge to main)
+├── feat/github-pages/<issue>-gap-fill                → PR #2: Gap-fill
+│   (merge to main)
+└── feat/github-pages/<issue>-external-standard       → PR #3: External standard
+    (merge to main)
 ```
 
-| Tag | Description |
-|-----|-------------|
-| `docs-v1-baseline-rollup` | Initial aggregation from component repos |
-| `docs-v2-gap-filled` | Documentation gaps filled per current standard |
-| `docs-v3-external-standard` | Aligned to external documentation standard |
+| Milestone | Branch | Description |
+|-----------|--------|-------------|
+| v1: Baseline rollup | `feat/github-pages/<issue>-baseline-rollup` | Initial aggregation from component repos |
+| v2: Gap-fill | `feat/github-pages/<issue>-gap-fill` | Documentation gaps filled per current standard |
+| v3: External standard | `feat/github-pages/<issue>-external-standard` | Aligned to external documentation standard |
+
+Each milestone branch is merged to `main` via PR before the next begins, creating a clean linear progression with reviewable increments.
+
+#### Why Multi-Branch Over Single-Branch With Tags
+
+A single-branch approach (one long-lived branch with tags marking milestones) was considered but rejected:
+
+| Concern | Single Branch + Tags | Multi-Branch (Selected) |
+|---------|---------------------|------------------------|
+| **Independent deployment** | All-or-nothing; can't merge v1 while v2 is in progress | Each milestone merges independently |
+| **Incremental review** | One large PR for all milestones | Focused PR per milestone |
+| **GitHub UI comparison** | Tag-to-tag diffs are less intuitive | Branch comparison works naturally |
+| **Stakeholder approval** | Must approve everything at once | Can approve milestones incrementally |
+| **Branch management** | Fewer branches to track | More branches, but consistent with existing fork-first workflow |
+
+The multi-branch approach aligns with the project's existing PR-per-change workflow and avoids creating a special case for documentation.
 
 #### Coordinated State via S.C.O.P.E.
 
-Since documentation spans multiple repos, S.C.O.P.E. submodule pointers capture coordinated states:
+Since documentation spans multiple repos, S.C.O.P.E. submodule pointers capture coordinated states. After each milestone merges, S.C.O.P.E. updates its submodule pointers to reflect the new documentation state:
 
 ```
-S.C.O.P.E. commit (tag: docs-v2-gap-filled)
+S.C.O.P.E. commit "docs: Update submodules for gap-fill milestone"
 ├── repos/mirage @ commit with enhanced docs
 ├── repos/aura @ commit with enhanced docs
 ├── repos/github-pages @ commit with re-aggregated content
 └── coordination/standards/component-documentation.md
 ```
 
-This allows checking out a specific documentation version across the entire ecosystem.
+Optional milestone tags on S.C.O.P.E. (e.g., `docs-v2-gap-filled`) can mark these coordinated states for easy checkout of a specific documentation version across the entire ecosystem.
 
-#### Multi-Branch Preview Options
+#### Comparing Documentation Versions
 
-GitHub Pages only deploys one branch at a time. For comparing multiple documentation versions:
+GitHub Pages only deploys one branch at a time. For comparing milestone states:
 
 | Approach | How It Works | Use Case |
 |----------|--------------|----------|
-| **Local preview** | `mkdocs serve` per branch/tag | Development, quick comparison |
+| **GitHub branch diff** | Compare PR branch to `main` | Review milestone changes before merge |
+| **Local preview** | `mkdocs serve` per branch | Development, quick comparison |
 | **Git worktrees** | Multiple checkouts, parallel servers | Side-by-side local comparison |
 | **Netlify/Cloudflare** | Automatic branch deploy previews | Stakeholder review, no local setup |
-| **Subdirectory deploy** | GitHub Actions deploys to `/v1/`, `/v2/` | Permanent version archive |
 
 **Local preview with git worktrees:**
 
 ```bash
-# Preview v1 (baseline)
-git checkout docs-v1-baseline-rollup
+# Preview main (current deployed state)
 mkdocs serve  # localhost:8000
 
-# In another terminal, preview v2 (gap-filled)
-git worktree add ../preview-v2 docs-v2-gap-filled
-cd ../preview-v2
+# In another terminal, preview the gap-fill branch
+git worktree add ../preview-gap-fill feat/github-pages/<issue>-gap-fill
+cd ../preview-gap-fill
 mkdocs serve -a localhost:8001  # localhost:8001
 
 # Compare in browser tabs
@@ -229,13 +245,13 @@ mkdocs serve -a localhost:8001  # localhost:8001
 For stakeholder review without local setup, connect the GitHub Pages repo to Netlify or Cloudflare Pages. These services provide automatic branch previews:
 
 ```
-main              → your-site.netlify.app
-docs-v2-gap-filled → docs-v2-gap-filled--your-site.netlify.app
+main                                    → your-site.netlify.app
+feat/github-pages/<issue>-gap-fill      → <branch>--your-site.netlify.app
 ```
 
 #### Future Consideration: External Documentation Standards
 
-The `docs-v3-external-standard` milestone anticipates aligning to a recognized documentation framework. Candidates include:
+The v3 (external standard) milestone anticipates aligning to a recognized documentation framework. Candidates include:
 
 | Framework | Focus | Consideration |
 |-----------|-------|---------------|
@@ -329,6 +345,7 @@ Each component publishes its own docs independently.
 - ADR-0001: Project Governance (S.C.O.P.E.'s coordination role)
 - ADR-0002: GitHub Infrastructure (issue tracking system)
 - `coordination/standards/component-documentation.md` - Documentation standard
+- S.C.O.P.E. Issue #29: Documentation aggregation pipeline (tracking issue)
 
 ## Change History
 
@@ -337,6 +354,7 @@ Each component publishes its own docs independently.
 | 2026-01-31 | Malcolm Howard | Initial draft |
 | 2026-02-01 | Malcolm Howard | Added content decomposition, asset management, and migration pattern sections |
 | 2026-02-03 | Malcolm Howard | Added documentation versioning strategy section; moved to formal location, status changed to Proposed |
+| 2026-02-05 | Malcolm Howard | Revised versioning strategy from single-branch-with-tags to multi-branch approach |
 | TBD | Kris Kersey | Review and approval |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
