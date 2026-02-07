@@ -285,6 +285,24 @@ Update these S.C.O.P.E. files to reflect meta-issue status:
 | `coordination/dependencies/` | Dependency tracking including meta-issues |
 | Project board | Kanban view of meta-issues and tracking refs |
 
+### 4.5 S.C.O.P.E. as Both Coordinator and Subject
+
+S.C.O.P.E. coordinates standards across the ecosystem, but it is also a repository within that ecosystem. **Standards that apply to component repositories also apply to S.C.O.P.E. itself.**
+
+When a meta-issue tracks work that affects S.C.O.P.E.'s own content (not just its coordination role), S.C.O.P.E. should have its own repo-level implementation issue, just as component repos do:
+
+```
+Meta-Issue #29: Documentation aggregation pipeline
+├── MIRAGE repo issue: docs gap-fill
+├── DAWN repo issue: docs gap-fill
+├── ...
+└── S.C.O.P.E. repo issue: create guide.md    ← S.C.O.P.E. as subject
+```
+
+**Why this matters**: Without this distinction, it is easy to assume that standards coordinated by S.C.O.P.E. apply only to the repositories it coordinates. This leads to the meta-repo being silently excluded from its own standards — an oversight that compounds over time.
+
+**Rule**: If a meta-issue's checklist would include a line item for S.C.O.P.E., create a separate repo-level issue in the meta-repo for that work, and reference it from the meta-issue like any other component issue.
+
 ---
 
 ## 5. Branch Naming Convention
@@ -464,6 +482,7 @@ Create separate ADRs for labels, branch protection, issues, etc.
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-01-31 | Malcolm Howard | Initial draft: labels, branch protection, milestones, issue tracking, branch naming (including 5.6 verification guidance); applied to all component repos |
+| 2026-02-06 | Malcolm Howard | Added section 4.5: S.C.O.P.E. as both coordinator and subject of ecosystem standards |
 | TBD | Kris Kersey | Review and approval |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
