@@ -91,6 +91,19 @@ Use existing libraries for specific hardware types.
 - SPI: gpiozero MockSPIDevice
 - Display: PyVirtualDisplay
 
+#### Option E: Add to GENESIS (Existing Utility Repo)
+Place mock hardware within the existing GENESIS Python utilities repository.
+
+**Considered because**:
+- GENESIS is the ecosystem's cross-component utility repo
+- Python mock implementations would sit alongside other Python utilities
+
+**Rejected because**:
+- **Consumption pattern mismatch**: GENESIS utilities are standalone scripts that are *run* independently (vision trigger, RTSP server, camera HUD). Mock hardware is a *library* that other repos import as a build dependency via submodule. These are fundamentally different relationships.
+- **Cross-language scope**: The HAL approach (see Cross-Language Strategy below) requires C header files and C mock implementations alongside the Python mocks. GENESIS is a Python-only repository with no C toolchain.
+- **Submodule granularity**: Components needing mock hardware would pull in all of GENESIS as a submodule, bringing unrelated camera scripts, GPIO triggers, and RTSP server code into their dependency tree.
+- **Independent maintenance scope**: Mock hardware has its own versioning, testing, and contribution concerns distinct from GENESIS utilities.
+
 ## Implementation
 
 ### Repository Setup
@@ -244,6 +257,19 @@ This enables end-to-end testing without physical hardware while respecting each 
 | 3 | C mock implementations | Mock implementations linkable in C components |
 | 4 | Integration harness | Python test harness for cross-component testing |
 
+#### Language Extensibility
+
+The C HAL approach is inherently extensible to additional languages because C headers serve as a universal interop layer. Any language with C Foreign Function Interface (FFI) support can consume the HAL headers directly:
+
+| Language | Interop Mechanism | Relevance to O.A.S.I.S. |
+|----------|-------------------|--------------------------|
+| C/C++ | Native | Current components (MIRAGE, DAWN, AURA, SPARK) |
+| Python | ctypes, cffi | Current components (DAWN, GENESIS) |
+| MicroPython/CircuitPython | Native API | AURA and SPARK hardware (ESP32-S3) already supports CircuitPython; lowers contribution barrier |
+| Rust | bindgen (C FFI) | Potential future components prioritizing memory safety |
+
+No additional HAL architecture work is required to support these languages. The only per-language effort would be writing idiomatic wrapper libraries if raw FFI is not ergonomic enough for a given use case.
+
 ### OS Independence
 
 **Requirement**: Must work on Linux, macOS, and Windows without physical hardware.
@@ -323,6 +349,7 @@ Mock hardware would enable testing patterns not currently possible:
 |------|--------|--------|
 | 2026-01-30 | Malcolm Howard | Initial draft |
 | 2026-02-03 | Malcolm Howard | Moved to formal location, status changed to Proposed; added Cross-Language Strategy section with HAL approach |
+| 2026-02-06 | Malcolm Howard | Added Option E (GENESIS) evaluation; added HAL language extensibility note |
 | TBD | Kris Kersey | Review and name selection |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
