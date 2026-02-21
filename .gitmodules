@@ -23,3 +23,6 @@
 [submodule "repos/github-pages"]
 	path = repos/github-pages
 	url = https://github.com/malcolmhoward/The-OASIS-Project.github.io.git
+[submodule "repos/stat"]
+	path = repos/stat
+	url = https://github.com/malcolmhoward/stat.git
