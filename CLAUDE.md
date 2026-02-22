@@ -44,6 +44,7 @@ Available as submodules under `repos/`:
 | AURA | Helmet firmware | C | Sensors, LEDs |
 | BEACON | CAD models | N/A | 3D printing |
 | GENESIS | Python utilities | Python | N/A |
+| S.T.A.T. | System telemetry | C | I2C power monitors, BMS |
 
 ## Cross-Repo Relationships
 
@@ -55,9 +56,11 @@ DAWN (AI) <--MQTT--> MIRAGE (HUD)
     |                    |
     v                    v
   SPARK <---MQTT---> AURA (firmware)
-                        |
-                        v
-                   BEACON (CAD)
+    |                    |
+    v                    v
+S.T.A.T. (telemetry) BEACON (CAD)
+    |
+    +--MQTT--> DAWN, MIRAGE (battery/power data)
 ```
 
 Communication between components uses **MQTT** messaging.
