@@ -122,11 +122,19 @@ This decision applies to all O.A.S.I.S. component repos that provide platform-sp
 
 1. **Pattern precedent** — This decision sets the pattern for other component repos. If a future component has significantly more platforms (5+), the calculus may shift toward a shared approach. Re-evaluate if the number of platform Dockerfiles exceeds 4 per component.
 
+## Companion Decisions
+
+- **[ADR-0006](0006-container-model-availability-strategy.md)**: Model Availability Strategy for
+  Containerized Components — applies to components (currently DAWN) that require large ML model
+  files at runtime. ADR-0006 defines the `SKIP_MODEL_DOWNLOAD` flag and lazy-download entrypoint
+  pattern that complements the independent Dockerfile structure defined here.
+
 ## Change History
 
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-02-08 | Malcolm Howard | Initial draft, during MIRAGE deployment standardization |
+| 2026-03-01 | Malcolm Howard | Added companion reference to ADR-0006 |
 | TBD | Kris Kersey | Review |
 | TBD | TBD | Accepted after stakeholder review |
 

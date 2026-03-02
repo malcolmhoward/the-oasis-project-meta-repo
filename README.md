@@ -38,7 +38,7 @@ O.A.S.I.S. documentation follows a three-tier architecture:
                           │ coordinates
 ┌─────────────────────────▼───────────────────────────────────────┐
 │              Component Repos (Authoritative Source)             │
-│  MIRAGE │ DAWN │ SPARK │ AURA │ BEACON │ GENESIS               │
+│  MIRAGE │ DAWN │ SPARK │ AURA │ BEACON │ GENESIS │ S.T.A.T.   │
 │  Each repo owns: README, CLAUDE.md, Dockerfiles, code docs     │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -61,6 +61,7 @@ repos/
   aura/                # Helmet controller firmware (C)
   beacon/              # CAD models and hardware documentation
   genesis/             # Python utilities and tools
+  stat/                # System telemetry and power monitoring (C)
   github-pages/        # Public documentation site
   project-foundation-template/  # PFT governance tooling (v3.7.0)
 ```
@@ -79,6 +80,7 @@ O.A.S.I.S. (Open-source Assistive System for Integrated Services) is an open-sou
 | [AURA](https://github.com/The-OASIS-Project/aura) | Helmet sensor firmware | C |
 | [BEACON](https://github.com/The-OASIS-Project/beacon) | CAD models and designs | N/A |
 | [GENESIS](https://github.com/The-OASIS-Project/genesis) | Python utilities | Python |
+| [S.T.A.T.](https://github.com/The-OASIS-Project/stat) | System telemetry and power monitoring | C |
 
 All component repositories are available as submodules under `repos/`.
 
@@ -120,6 +122,7 @@ scope/
 │   ├── aura/
 │   ├── beacon/
 │   ├── genesis/
+│   ├── stat/
 │   └── project-foundation-template/
 └── scripts/                    # Automation scripts (planned)
 ```
