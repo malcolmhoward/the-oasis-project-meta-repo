@@ -161,6 +161,10 @@ All O.A.S.I.S. repositories should include:
 - `CLAUDE.md` - LLM integration guidance
 - `GETTING_STARTED.md` - Quick start for that component
 
+Component names follow the O.A.S.I.S. thematic naming convention.
+See [ADR-0007: Component Naming Convention](coordination/decisions/adr/0007-component-naming-convention.md)
+before proposing a name for a new component.
+
 ## Related Projects
 
 - [The-OASIS-Project.github.io](https://github.com/The-OASIS-Project/The-OASIS-Project.github.io) - Public documentation portal (MkDocs site)

@@ -1,4 +1,7 @@
-# ADR 0003: Hardware Mocking Architecture
+# ADR 0003: Simulation Environment Architecture
+
+> **Renamed** from "Hardware Mocking Architecture" on 2026-03-08 to reflect
+> expanded scope. See Amendment 1.
 
 **Date**: TBD (pending approval)
 **Status**: Proposed
@@ -332,16 +335,125 @@ Mock hardware would enable testing patterns not currently possible:
 
 > **Note**: The following acronyms and expansions are **illustrative examples only**.
 > They do not represent proposed names. The official name will be selected by Kris Kersey.
+>
+> **Scope note (2026-03-08)**: Candidates whose expansions reference "Hardware" specifically
+> now undersell the full scope (Device + Network + Platform layers). Expansions can be
+> revised if a name is selected. See ADR-0007 for thematic evaluation against the expanded scope.
 
 | Name | Expansion | Notes |
 |------|-----------|-------|
-| **H.A.Z.E.** | Hardware Abstraction Zone for Emulation | Thematically aligned, virtual imagery |
-| **M.I.S.T.** | Mock Infrastructure for System Testing | Complements haze imagery |
-| **S.H.A.D.O.W.** | Simulated Hardware Abstraction for Development & Offline Work | Descriptive but long |
-| **E.C.H.O.** | Emulated Components for Hardware Operations | Short and functional |
-| **M.I.R.R.O.R.** | Mock Infrastructure for Reliable Replication of Resources | Mirrors M.I.R.A.G.E. naming |
-| **P.H.A.N.T.O.M.** | Platform for Hardware Abstraction, Non-physical Testing & Operations Mocking | Very descriptive |
-| **V.E.I.L.** | Virtual Emulation Interface Layer | Short, evokes abstraction |
+| **E.C.H.O.** | Emulated Component and Hardware Operations (or Kris's choice) | Strongest new candidate for expanded scope. An echo faithfully reproduces behavior without being the original — precise metaphor for all three layers. Short, memorable, no hardware specificity. |
+| **P.H.A.N.T.O.M.** | Platform for Hardware Abstraction, Non-physical Testing & Operations Mocking | Most semantically precise — a phantom is definitionally non-physical presence. Expansion is a stretch; acronym is long. |
+| **H.A.Z.E.** | Hardware Abstraction Zone for Emulation | Current working name; familiarity is an asset. "Hardware" in expansion undersells scope; expansion can be revised if selected. |
+| **M.I.S.T.** | Mock Infrastructure for System Testing | "System Testing" naturally covers all three layers. Complements H.A.Z.E. thematically. |
+| **M.I.R.R.O.R.** | Mock Infrastructure for Reliable Replication of Resources | Reflects reality faithfully; strong simulation metaphor. Phonetically echoes M.I.R.A.G.E. |
+| **V.E.I.L.** | Virtual Emulation Interface Layer | Fits the thematic register, but a veil *obscures* rather than *replicates* — slightly wrong metaphor. |
+| **S.H.A.D.O.W.** | Simulated Hardware Abstraction for Development & Offline Work | A shadow requires the real object to be present — opposite of what simulation does. |
+
+## Amendments
+
+### Amendment 1 — Scope Expansion: Simulation Framework (2026-03-08)
+
+The scope of this project has expanded from hardware-primitive mocking to a full
+**simulation framework** covering three layers. The standalone repository and git
+submodule integration established in the original decision remain correct. The
+layered architecture adds Network and Platform layers above the Device layer
+without changing the repository structure or integration approach.
+
+#### Layered Architecture
+
+```
+Simulation Framework Architecture
+├── Device layer: Hardware Primitives (STABLE — no external dependencies)
+│   ├── Sensor value generators (IMU, GPS, environmental, battery, system metrics)
+│   ├── GPIO / I2C / SPI state simulators
+│   ├── MockCamera (metadata dict output)
+│   └── MockMicrophone / MockSpeaker (synthetic audio frames, null sink)
+│
+├── Network layer: Protocol Simulation (STABLE — depends only on OCP spec)
+│   ├── DAP2 satellite WebSocket client (register, text-path command injection)
+│   ├── OCP peer registration and keepalive (E3/E4 embodiment)
+│   └── MQTT topic helpers and message serializers
+│
+└── Platform layer: Software Behavior Simulation (VERSIONED — may evolve)
+    ├── Home Assistant REST API mock (Flask, in-process, no real HA required)
+    ├── LLM mock service (keyword → tool call synthesis, streaming simulation)
+    └── Memory/RAG stub (SQLite + embedding stub, keyword retrieval)
+```
+
+Breaking the Platform layer does not break the Device or Network layers. The Device
+layer remains stable regardless of LLM or external API changes.
+
+#### Per-Component Layer Requirements
+
+| Component | Device | Network | Platform | Notes |
+|-----------|:------:|:-------:|:--------:|-------|
+| MIRAGE | ✅ | — | — | HUD sensors over MQTT |
+| DAWN | ✅ | ✅ | ✅ | Full pipeline: sensors + OCP + HA/LLM/memory |
+| SPARK | ✅ | — | — | SPI/I2C peripheral mocking |
+| AURA | ✅ | — | — | Sensor mocking |
+| S.T.A.T. | ✅ | — | — | I2C mocking (INA238, INA3221, Daly BMS) |
+
+#### Demo Ownership Model
+
+Runnable demos are not part of the simulation framework repository itself. Ownership:
+
+| Scope | Lives in | What it demonstrates |
+|-------|----------|----------------------|
+| Component demo | Component repo `demos/` | That component running with simulation substituting its dependencies |
+| Cross-component demo | S.C.O.P.E. `demos/` | Multiple components working together against a simulated environment — fully mocked by default, with real hardware or services substituted where available |
+
+The simulation framework repository ships `examples/` showing how to use each
+layer's API; runnable Docker Compose demos live in the repos that own the
+component(s) being demonstrated.
+
+---
+
+### Amendment 2 — Selective Injection Design Constraint (2026-03-08)
+
+**Design constraint**: All simulation layer mock classes must be **interface-compatible**
+with their real hardware and software counterparts. A component must be able to
+substitute a mock for a real driver without changing component code — only the
+injected object changes.
+
+This elevates the HAL Interface Pattern in the Cross-Language Strategy section from
+a design suggestion to a **hard requirement** for all Device layer classes, and
+applies equivalently to Network and Platform layer mocks.
+
+#### Requirement
+
+For every interface mocked by the simulation framework:
+
+1. The mock class implements exactly the same public API as the real driver or service
+2. Component code programs against the interface, not the implementation
+3. At runtime, either the real implementation or the mock is injected depending on
+   hardware availability and user intent
+
+`MockGPIO` already satisfies this (RPi.GPIO-compatible class-method API). This
+pattern must be applied consistently across all layers.
+
+#### Demo Launch Behaviour
+
+Demos must support three modes to accommodate mixed real/simulated environments:
+
+| Mode | Behaviour | How invoked |
+|------|-----------|-------------|
+| Auto-detect | Probe for real hardware/services first; fall back to mock for anything unavailable | Default (no flags) |
+| Full mock | Skip probing; use simulation for everything | `--all-mock` |
+| Selective mock | Use real hardware/services except where explicitly overridden | `--mock-camera`, `--mock-imu`, etc. |
+
+Auto-detect is the recommended default: the same demo command works on a
+developer's laptop (everything mocked) and on a Jetson with a real camera attached
+(camera real, sensors mocked) without requiring the user to declare what hardware
+is present.
+
+#### Rationale
+
+If mocks are not interface-compatible, selective injection is not possible — code
+using a `MockCamera` would require different paths from code using a real camera
+driver. Interface compatibility is what makes auto-detect and selective override
+work transparently, and is what allows a demo to gracefully use real hardware where
+available without reconfiguration.
 
 ## Change History
 
@@ -350,6 +462,9 @@ Mock hardware would enable testing patterns not currently possible:
 | 2026-01-30 | Malcolm Howard | Initial draft |
 | 2026-02-03 | Malcolm Howard | Moved to formal location, status changed to Proposed; added Cross-Language Strategy section with HAL approach |
 | 2026-02-06 | Malcolm Howard | Added Option E (GENESIS) evaluation; added HAL language extensibility note |
+| 2026-03-08 | Malcolm Howard | Amendment 1: Scope expanded to full simulation framework; added layered architecture (Device/Network/Platform), per-component layer needs, and demo ownership model |
+| 2026-03-08 | Malcolm Howard | Amendment 2: Selective injection design constraint; mock classes must be interface-compatible with real drivers; demo auto-detect and selective override modes |
+| 2026-03-08 | Malcolm Howard | Renamed file from `0003-hardware-mocking.md` to `0003-simulation-environment-architecture.md`; title updated to match expanded scope |
 | TBD | Kris Kersey | Review and name selection |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
