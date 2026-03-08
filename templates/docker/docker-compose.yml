@@ -1,0 +1,135 @@
+# O.A.S.I.S. Multi-Component Development Environment
+# This docker-compose orchestrates multiple O.A.S.I.S. components for integrated development.
+#
+# Usage:
+#   docker-compose up              # Start all services
+#   docker-compose up mirage dawn  # Start specific services
+#   docker-compose down            # Stop all services
+#
+# Prerequisites:
+#   - Clone component repos to ../mirage, ../dawn, etc. (relative to this repo)
+#   - Or set OASIS_REPOS_PATH environment variable
+#
+# Note: Each component repo maintains its own Dockerfile. This compose file
+# orchestrates them for integrated development.
+
+version: '3.8'
+
+services:
+  # MQTT Broker - Central message bus for O.A.S.I.S. communication
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: oasis-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mqtt-data:/mosquitto/data
+      - mqtt-log:/mosquitto/log
+    networks:
+      - oasis-network
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MIRAGE - HUD Display System
+  # Build from: https://github.com/The-OASIS-Project/mirage
+  mirage:
+    build:
+      context: ${OASIS_REPOS_PATH:-../../}/mirage
+      dockerfile: Dockerfile.dev
+    container_name: oasis-mirage
+    environment:
+      - MQTT_BROKER=mqtt
+      - MQTT_PORT=1883
+      - DISPLAY_MODE=mock
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    networks:
+      - oasis-network
+    # Uncomment for display passthrough (Linux with X11)
+    # environment:
+    #   - DISPLAY=${DISPLAY}
+    # volumes:
+    #   - /tmp/.X11-unix:/tmp/.X11-unix:ro
+
+  # DAWN - AI Voice Assistant
+  # Build from: https://github.com/The-OASIS-Project/dawn
+  dawn:
+    build:
+      context: ${OASIS_REPOS_PATH:-../../}/dawn
+      dockerfile: Dockerfile.dev
+    container_name: oasis-dawn
+    environment:
+      - MQTT_BROKER=mqtt
+      - MQTT_PORT=1883
+      - TTS_ENGINE=mock
+      - LLM_BACKEND=mock
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    networks:
+      - oasis-network
+    # Uncomment for audio passthrough (Linux with PulseAudio)
+    # volumes:
+    #   - /run/user/1000/pulse:/run/user/1000/pulse:ro
+    # environment:
+    #   - PULSE_SERVER=unix:/run/user/1000/pulse/native
+
+  # AURA Simulator - Helmet Sensor Firmware Simulation
+  # Build from: https://github.com/The-OASIS-Project/aura
+  aura-sim:
+    build:
+      context: ${OASIS_REPOS_PATH:-../../}/aura
+      dockerfile: Dockerfile.dev
+    container_name: oasis-aura-sim
+    environment:
+      - MQTT_BROKER=mqtt
+      - MQTT_PORT=1883
+      - SENSOR_MODE=simulated
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    networks:
+      - oasis-network
+
+  # SPARK Simulator - Hand/Gauntlet Firmware Simulation
+  # Build from: https://github.com/The-OASIS-Project/spark
+  spark-sim:
+    build:
+      context: ${OASIS_REPOS_PATH:-../../}/spark
+      dockerfile: Dockerfile.dev
+    container_name: oasis-spark-sim
+    environment:
+      - MQTT_BROKER=mqtt
+      - MQTT_PORT=1883
+      - SENSOR_MODE=simulated
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    networks:
+      - oasis-network
+
+  # MQTT Monitor - Development tool for watching message traffic
+  mqtt-monitor:
+    image: eclipse-mosquitto:2
+    container_name: oasis-mqtt-monitor
+    entrypoint: mosquitto_sub
+    command: ["-h", "mqtt", "-t", "#", "-v"]
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    networks:
+      - oasis-network
+
+networks:
+  oasis-network:
+    driver: bridge
+
+volumes:
+  mqtt-data:
+  mqtt-log:
