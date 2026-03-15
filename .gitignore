@@ -39,4 +39,5 @@ docs/claude/scratch/
 scratch/
 
 # Project specific
-# [ADD YOUR PROJECT'S SPECIFIC IGNORES HERE]
+pft-output/
+nul
