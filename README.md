@@ -9,7 +9,9 @@ Meta-repository for coordinating the [O.A.S.I.S. Project](https://github.com/The
 S.C.O.P.E. serves as the central coordination point for the Open-source Assistive System for Integrated Services (O.A.S.I.S.) project. It will provide:
 
 - **Unified documentation** across all O.A.S.I.S. components
-- **Getting started guides** for different hardware platforms
+- **Getting started guides** for different hardware platforms — including
+  simulation-only development on Windows, macOS, Linux, and Chromebooks
+  via Python or pre-built Docker images; no Jetson or GPU required
 - **Hardware guides** showing hardware progression paths
 - **Cross-project coordination** for roadmaps and dependencies
 - **Docker orchestration** for multi-component development
@@ -95,6 +97,7 @@ This repository is under active development. Currently implemented:
 Coming soon:
 
 - [ ] Foundation templates for repo standardization
+- [x] Development environment guide (access paths, Docker distribution, classroom setup)
 - [ ] Hardware guides (platform comparison, costs)
 - [ ] Getting started guides per platform
 - [ ] Docker orchestration
@@ -111,6 +114,7 @@ scope/
 │   ├── dependencies/           # Cross-repo dependencies (planned)
 │   └── decisions/adr/          # Architecture decisions (planned)
 ├── getting-started/
+│   ├── DEVELOPMENT_ENVIRONMENT.md  # Access paths, hardware profiles, Docker distribution, classroom setup
 │   ├── raspberry-pi/           # Pi setup guide (planned)
 │   ├── orin-nano/              # Orin setup guide (planned)
 │   └── jetson-nx/              # Jetson setup guide (planned)

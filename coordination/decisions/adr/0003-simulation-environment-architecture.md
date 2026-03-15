@@ -455,6 +455,126 @@ driver. Interface compatibility is what makes auto-detect and selective override
 work transparently, and is what allows a demo to gracefully use real hardware where
 available without reconfiguration.
 
+---
+
+### Amendment 3 — Accessibility as Primary Motivation (2026-03-11)
+
+The original Context section frames the simulation environment primarily as a
+**testing infrastructure** concern. This framing is incomplete.
+
+The simulation environment's primary value is **contributor and user
+accessibility**. End-to-end testing is a significant secondary benefit that
+falls out of the same infrastructure, not the reverse.
+
+#### The Dependency Spectrum
+
+O.A.S.I.S. contributors face two compounding categories of barrier:
+
+**Hardware dependencies** — physical devices required to run component code:
+GPIO, I2C, SPI, cameras, IMU, GPS, microphone, speaker. These require
+Jetson-class or Raspberry Pi hardware and associated peripherals.
+
+**Software service dependencies** — infrastructure required to exercise
+component logic, independent of hardware ownership:
+
+| Service | Component | Barrier |
+|---------|-----------|---------|
+| LLM inference (local Ollama) | DAWN | Requires Jetson-class CPU or GPU; not viable on standard laptops at conversational latency |
+| LLM inference (remote API) | DAWN | Requires API keys and outbound network access |
+| Home Assistant | DAWN | Requires a dedicated running instance with configured integrations |
+| Real-time ASR (Whisper / faster-whisper) | DAWN | GPU recommended for real-time throughput |
+| Memory / RAG (vector store) | DAWN | Requires a running embedding service |
+| MQTT broker | MIRAGE, DAWN, SPARK, AURA | Lower barrier, but still a runtime service dependency |
+
+A capable developer with a modern laptop, no GPU, and no Jetson — which
+describes the majority of potential contributors, classroom participants, and
+early evaluators — cannot exercise DAWN's core intent-processing pipeline
+without the Platform layer simulation. They are blocked not by lack of skill
+or motivation but by a software dependency chain that implies specialized
+hardware.
+
+#### Minimum Viable Contributor Hardware
+
+The simulation environment is specifically designed so that **a 4 GB device
+with Docker Desktop or Python is a sufficient development environment** for the
+majority of O.A.S.I.S. component logic. This includes:
+
+- **Any OS via Docker Desktop** — Windows and macOS users can run a pre-built
+  Docker image containing the full DAWN binary and runtime. The container is
+  a self-contained Linux environment; `docker-compose` handles all OS-specific
+  differences. No Linux, no build toolchain, no API keys required.
+- **Linux / Chrome OS (Crostini) / macOS via Python** — the simulation
+  framework is a pure-Python package installable with `pip`. Works on
+  Chromebooks with Linux enabled, low-end laptops, and shared school or
+  library computers.
+- **Raspberry Pi 3B+ or earlier** — sufficient for logic development and
+  simulation framework use; not for performance testing.
+
+All three simulation layers run as lightweight Python processes. The Layer 2
+mock services (Home Assistant, LLM, memory) use in-process Flask and SQLite —
+they do not load model weights and have no meaningful compute floor. The full
+three-layer stack active simultaneously uses approximately 150–300 MB of
+memory.
+
+This profile is sufficient to exercise:
+- MIRAGE: HUD rendering, sensor overlay, display state transitions
+  (excluding live camera feed processing)
+- DAWN: Full intent-processing pipeline via Device + Network + Platform layers
+- SPARK, AURA: Firmware logic, SPI/I2C peripheral handling
+- S.T.A.T.: I2C mocking
+- All components: Unit tests, integration tests, CI/CD
+
+#### The Docker Distribution Path
+
+A pre-built Docker image extends accessibility further than the Python
+simulation path alone. Because simulation mode requires no hardware
+passthrough (no GPU, no audio devices, no `/dev/` paths), a Docker image
+built once on a capable Linux machine or CI runner runs without modification
+on Linux, Windows (Docker Desktop), and macOS (Docker Desktop).
+
+For offline or bandwidth-constrained environments such as classrooms:
+
+```bash
+# Distribute as a compressed archive
+docker save oasis-dawn-simulation | gzip > dawn-simulation.tar.gz
+
+# Recipient loads and runs on any OS with Docker
+docker load < dawn-simulation.tar.gz
+docker compose up
+```
+
+This is the same pattern as distributing a compiled application with its
+runtime bundled — the recipient requires no build toolchain, no Linux, and
+no knowledge of the dependency chain.
+
+#### Educational Context
+
+The 4 GB / no-GPU / any-OS profile is the profile of hardware commonly
+available in school settings — Chromebook labs, shared Windows desktops,
+and student laptops. Making this a first-class supported profile is a
+deliberate design choice. Documentation, demos, and getting-started guides
+should reflect this.
+
+#### Implications for Context Section
+
+The Context section's "Hardware mocking enables" bullet list should be read
+with this framing:
+
+- **Development without physical hardware** — primary value: reaches
+  contributors and learners who cannot acquire Jetson-class hardware
+- **CI/CD testing in cloud environments** — secondary value: same
+  infrastructure enables automated testing at no additional cost
+- **Faster iteration cycles** — secondary value: falls out of not needing
+  physical hardware present
+- **Lower contribution barriers** — restatement of primary value; should be
+  first, not last
+
+For the full development environment guide including access paths, Docker
+distribution instructions, classroom configurations, and component coverage
+by profile, see
+[`getting-started/DEVELOPMENT_ENVIRONMENT.md`](../../getting-started/DEVELOPMENT_ENVIRONMENT.md)
+in S.C.O.P.E.
+
 ## Change History
 
 | Date | Author | Change |
@@ -465,6 +585,7 @@ available without reconfiguration.
 | 2026-03-08 | Malcolm Howard | Amendment 1: Scope expanded to full simulation framework; added layered architecture (Device/Network/Platform), per-component layer needs, and demo ownership model |
 | 2026-03-08 | Malcolm Howard | Amendment 2: Selective injection design constraint; mock classes must be interface-compatible with real drivers; demo auto-detect and selective override modes |
 | 2026-03-08 | Malcolm Howard | Renamed file from `0003-hardware-mocking.md` to `0003-simulation-environment-architecture.md`; title updated to match expanded scope |
+| 2026-03-11 | Malcolm Howard | Amendment 3: Accessibility reframing — contributor accessibility identified as primary motivation; software dependency spectrum documented; minimum viable hardware profile (4 GB, no GPU, any OS via Docker) established; Docker distribution path documented; classroom context added |
 | TBD | Kris Kersey | Review and name selection |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
