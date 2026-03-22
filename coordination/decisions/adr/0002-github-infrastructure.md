@@ -301,7 +301,12 @@ Meta-Issue #29: Documentation aggregation pipeline
 
 **Why this matters**: Without this distinction, it is easy to assume that standards coordinated by S.C.O.P.E. apply only to the repositories it coordinates. This leads to the meta-repo being silently excluded from its own standards — an oversight that compounds over time.
 
-**Rule**: If a meta-issue's checklist would include a line item for S.C.O.P.E., create a separate repo-level issue in the meta-repo for that work, and reference it from the meta-issue like any other component issue.
+**Rule**: If a meta-issue's checklist would include a line item for S.C.O.P.E., create a separate repo-level issue in the meta-repo for that work, and reference it from the meta-issue like any other component issue. The corresponding branch should use `feat/scope/<issue#>-<description>` naming, and the PR should close the repo-level issue (not the meta-issue).
+
+**Examples of S.C.O.P.E. as subject**:
+- #32: Foundation files (tracks meta-issue #22)
+- #31: Documentation guide.md (tracks meta-issue #29)
+- #40: Ecosystem simulation demo (tracks meta-issue #30)
 
 ---
 
