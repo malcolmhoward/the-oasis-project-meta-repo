@@ -670,8 +670,92 @@ the fallback layer that makes graceful degradation possible.
 | 1 | HAL interfaces (pure contracts) | Complete |
 | 2 | Mock implementations (all three layers) | Complete |
 | 3 | Startup injection modes (Amendment 2) | Design complete; demo implementation pending |
-| 4 | Provider pattern (runtime swap) | Design (this amendment); implementation deferred to demo phase |
+| 4 | Provider pattern (runtime swap) | Complete (`simulation/hal/provider.py`); 16 tests |
 | 5 | OS-level device detection (hot-plug) | Future; requires platform-specific code (udev on Linux, WMI on Windows) |
+
+---
+
+### Amendment 5 — OCP Embodiment Spectrum (2026-03-22)
+
+The simulation framework uses "embodiment" to classify peers on the O.A.S.I.S.
+network by their relationship to physical hardware. Amendment 2 introduced
+E3 (physical) and E4 (software) types. This amendment defines the full
+spectrum and the status message schema extension.
+
+> **Status**: E3 and E4 are implemented. E1, E2, and E5 are proposed and
+> pending Kris Kersey's review.
+
+#### Embodiment Types
+
+| Type | Name | Description | Example |
+|------|------|-------------|---------|
+| **E1** | Passive data source | Publishes data but accepts no commands | Standalone temperature logger |
+| **E2** | Embedded controller | Microcontroller-based; publishes data and responds to simple commands | A.U.R.A. (ESP32), S.P.A.R.K. (Arduino) |
+| **E3** | Full compute peer | SBC (Single-Board Computer) with full OS; runs application logic | M.I.R.A.G.E. on Jetson, S.T.A.T. on Raspberry Pi |
+| **E4** | Software-only peer | No dedicated hardware; runs on shared compute (laptop, cloud, Docker) | D.A.W.N. on x86 server, E.C.H.O. simulated peers |
+| **E5** | Hybrid peer | Mix of real and simulated interfaces via Provider hot-swap | M.I.R.A.G.E. with real camera but simulated sensors |
+
+#### OCP Behaviour by Type
+
+- **E1**: Publishes to data topics only. May publish status (retained). Does not subscribe to command topics.
+- **E2**: Publishes data and status. Subscribes to its command topic. Fixed command set defined at compile time.
+- **E3**: Full OCP participation — status with LWT (Last Will and Testament), discovery, command/response, heartbeat (30-second interval, 90-second timeout).
+- **E4**: Same as E3, but `embodiment` field is `"software"`. Simulated peers additionally publish to `echo/discovery/simulates`.
+- **E5**: Same as E3, but discovery message lists which capabilities are simulated vs. real.
+
+#### Status Message Schema Extension
+
+The existing OCP status message gains an optional `embodiment` block:
+
+```json
+{
+  "device": "mirage",
+  "msg_type": "status",
+  "status": "online",
+  "timestamp": 1711148400,
+  "version": "2.1.0",
+  "capabilities": ["armor_display", "detect", "map"],
+  "embodiment": {
+    "type": "E4",
+    "label": "software",
+    "simulated_capabilities": ["motion", "gps", "environmental"],
+    "real_capabilities": []
+  }
+}
+```
+
+Peers that omit the `embodiment` block are assumed E3 (full physical). The
+block is most useful for E4 (simulated) and E5 (hybrid) peers.
+
+#### Discovery for Simulated Peers
+
+Simulated peers publish to `echo/discovery/simulates` (retained):
+
+```json
+{
+  "peer_id": "echo-aura-simulation",
+  "component": "aura",
+  "embodiment": "software",
+  "capabilities": ["motion", "gps", "environmental"],
+  "timestamp": 1711148400
+}
+```
+
+This enables consuming components (e.g., M.I.R.A.G.E. HUD status display,
+D.A.W.N. WebUI), the Provider pattern, and test harnesses to distinguish
+simulated peers from physical hardware on the same network.
+
+#### Implementation Status
+
+| Type | Status |
+|------|--------|
+| E3 (physical) | Implemented — `Embodiment.E3` in `simulation/layer1/ocp.py` |
+| E4 (software) | Implemented — `Embodiment.E4` in `simulation/layer1/ocp.py` |
+| E1 (passive) | Proposed — pending review |
+| E2 (embedded) | Proposed — pending review |
+| E5 (hybrid) | Proposed — pending review; depends on Provider pattern (implemented) |
+| `embodiment` block | Proposed schema — not yet in `OCPPeer` status messages |
+| `echo/discovery/simulates` | Implemented — published by `OCPPeer` and ecosystem demo |
 
 ---
 
@@ -686,7 +770,8 @@ the fallback layer that makes graceful degradation possible.
 | 2026-03-08 | Malcolm Howard | Amendment 2: Selective injection design constraint; mock classes must be interface-compatible with real drivers; demo auto-detect and selective override modes |
 | 2026-03-08 | Malcolm Howard | Renamed file from `0003-hardware-mocking.md` to `0003-simulation-environment-architecture.md`; title updated to match expanded scope |
 | 2026-03-11 | Malcolm Howard | Amendment 3: Accessibility reframing — contributor accessibility identified as primary motivation; software dependency spectrum documented; minimum viable hardware profile (4 GB, no GPU, any OS via Docker) established; Docker distribution path documented; classroom context added |
-| 2026-03-22 | Malcolm Howard | Amendment 4: Runtime injection modes and graceful degradation — three injection phases (default, explicit, runtime); Provider pattern for hot-swap; connection to OCP component discovery; graceful degradation when hardware/services appear or disappear |
+| 2026-03-22 | Malcolm Howard | Amendment 4: Runtime injection modes and graceful degradation — three injection phases (default, explicit, runtime); Provider pattern for hot-swap (implemented in `simulation/hal/provider.py`); connection to OCP component discovery; graceful degradation when hardware/services appear or disappear |
+| 2026-03-22 | Malcolm Howard | Amendment 5: OCP Embodiment Spectrum — E1-E5 type definitions, status message schema extension with `embodiment` block, discovery topic for simulated peers; E3/E4 implemented, E1/E2/E5 proposed pending review |
 | TBD | Kris Kersey | Review and name selection |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
