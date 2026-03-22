@@ -575,6 +575,106 @@ by profile, see
 [`getting-started/DEVELOPMENT_ENVIRONMENT.md`](../../getting-started/DEVELOPMENT_ENVIRONMENT.md)
 in S.C.O.P.E.
 
+### Amendment 4 — Runtime Injection Modes and Graceful Degradation (2026-03-22)
+
+Amendment 2 defines three injection modes at **startup** (auto-detect, full-mock,
+selective-mock). This amendment extends the injection model to cover the full
+component **lifecycle**, including hardware and service changes that occur after
+launch.
+
+#### The Three Injection Phases
+
+| Phase | When | What Happens | Example |
+|-------|------|-------------|---------|
+| **Default injection** | Container/process start | All mocks active; no configuration needed | Docker container launches on a laptop — everything simulated |
+| **Explicit injection** | Container/process start | User declares which deps are real vs. mocked | `--mock-camera --real-mqtt` — real broker, simulated sensors |
+| **Runtime injection** | After launch | Hardware or services appear/disappear; framework swaps implementations transparently | USB camera plugged in → MockCamera replaced by real driver; camera unplugged → falls back to MockCamera |
+
+Default and explicit injection are covered by Amendment 2's auto-detect, full-mock,
+and selective-mock modes. Runtime injection is new.
+
+#### Runtime Drop-In / Drop-Out
+
+Components in the O.A.S.I.S. ecosystem are loosely coupled — OCP peers register
+and deregister dynamically, and hardware can be connected or disconnected at any
+time. The simulation framework should reflect this by supporting **runtime
+injection changes** without restarting the component.
+
+Scenarios:
+
+| Event | Behaviour |
+|-------|-----------|
+| USB camera plugged in after launch | Provider detects new hardware; swaps MockCamera for real camera driver; component continues without restart |
+| Camera disconnected during operation | Provider detects removal; swaps back to MockCamera; component continues with simulated frames |
+| Real MQTT broker becomes reachable | Provider swaps mock MQTT client for real paho-mqtt connection; existing subscriptions are re-established |
+| OCP physical peer (E3) goes offline | Simulated E4 peer can fill the gap, advertising via `echo/discovery/simulates`; consuming components see continuity |
+| Home Assistant instance starts | Provider swaps HomeAssistantMock for real HA REST client; tool calls now hit real devices |
+
+#### Provider Pattern
+
+To support all three injection phases, each HAL interface should be accessed
+through a **Provider** that manages which implementation is currently active:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Component Code                     │
+│           (programs against HAL interface)            │
+└──────────────────────┬──────────────────────────────┘
+                       │ calls
+┌──────────────────────▼──────────────────────────────┐
+│                     Provider                         │
+│  - Holds reference to active implementation          │
+│  - Monitors for hardware/service availability        │
+│  - Swaps implementation on detection events          │
+│  - Emits status change notifications                 │
+└──────────┬───────────────────────┬──────────────────┘
+           │                       │
+  ┌────────▼────────┐    ┌────────▼────────┐
+  │   MockCamera    │    │  Real Camera    │
+  │ (CameraInterface)│    │ (CameraInterface)│
+  └─────────────────┘    └─────────────────┘
+```
+
+The Provider is **not** part of the HAL interfaces themselves — it sits above
+them. HAL interfaces remain pure contracts with no awareness of injection. The
+Provider is an **orchestration concern** that lives in the consuming component
+or in a shared utility module.
+
+Implementation is deferred to the demo phase. The minimum viable Provider:
+
+1. Wraps a HAL interface reference
+2. Supports `swap(new_implementation)` to change the active backend
+3. Optionally monitors for hardware events (OS-level device detection)
+4. Emits a callback or event when the active implementation changes
+
+#### Connection to OCP Component Discovery
+
+OCP's discovery mechanism (`<component>/discovery/<capability>` topics) and
+the simulation framework's `echo/discovery/simulates` topic together enable
+a system where:
+
+- Real and simulated peers coexist on the same MQTT network
+- Consumers can query which peers are simulated vs. physical
+- The Provider can use discovery information to decide when to swap
+  implementations (e.g., a real AURA peer publishes its status → the Provider
+  swaps MockSensor for real AURA telemetry)
+
+This aligns with the O.A.S.I.S. architecture's design principle that components
+should not hard-fail when a peer disappears. The simulation framework provides
+the fallback layer that makes graceful degradation possible.
+
+#### Phasing
+
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| 1 | HAL interfaces (pure contracts) | Complete |
+| 2 | Mock implementations (all three layers) | Complete |
+| 3 | Startup injection modes (Amendment 2) | Design complete; demo implementation pending |
+| 4 | Provider pattern (runtime swap) | Design (this amendment); implementation deferred to demo phase |
+| 5 | OS-level device detection (hot-plug) | Future; requires platform-specific code (udev on Linux, WMI on Windows) |
+
+---
+
 ## Change History
 
 | Date | Author | Change |
@@ -586,6 +686,7 @@ in S.C.O.P.E.
 | 2026-03-08 | Malcolm Howard | Amendment 2: Selective injection design constraint; mock classes must be interface-compatible with real drivers; demo auto-detect and selective override modes |
 | 2026-03-08 | Malcolm Howard | Renamed file from `0003-hardware-mocking.md` to `0003-simulation-environment-architecture.md`; title updated to match expanded scope |
 | 2026-03-11 | Malcolm Howard | Amendment 3: Accessibility reframing — contributor accessibility identified as primary motivation; software dependency spectrum documented; minimum viable hardware profile (4 GB, no GPU, any OS via Docker) established; Docker distribution path documented; classroom context added |
+| 2026-03-22 | Malcolm Howard | Amendment 4: Runtime injection modes and graceful degradation — three injection phases (default, explicit, runtime); Provider pattern for hot-swap; connection to OCP component discovery; graceful degradation when hardware/services appear or disappear |
 | TBD | Kris Kersey | Review and name selection |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
