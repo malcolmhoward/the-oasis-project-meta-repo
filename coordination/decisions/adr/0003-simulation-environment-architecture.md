@@ -675,33 +675,61 @@ the fallback layer that makes graceful degradation possible.
 
 ---
 
-### Amendment 5 — OCP Embodiment Spectrum (2026-03-22)
+### Amendment 5 — OCP Embodiment Spectrum (2026-03-22, revised 2026-03-28)
 
 The simulation framework uses "embodiment" to classify peers on the O.A.S.I.S.
-network by their relationship to physical hardware. Amendment 2 introduced
-E3 (physical) and E4 (software) types. This amendment defines the full
-spectrum and the status message schema extension.
+network by their **relationship to physical reality** — not by platform
+capability. A passive temperature sensor and a full-compute Jetson are both
+*physical* peers (E1) because they have real bodies; they differ in capability,
+not in embodiment. This distinction keeps the spectrum intuitive as O.A.S.I.S.
+expands into game engines, simulations, and software-only services.
 
-> **Status**: E3 and E4 are implemented. E1, E2, and E5 are proposed and
-> pending Kris Kersey's review.
+> **Status**: E1 and E4 are implemented in the simulation framework (as
+> `Embodiment.E3` and `Embodiment.E4` — enum values will be updated to
+> match the revised spectrum). E2, E3, and E5 are proposed pending Kris
+> Kersey's review.
 
 #### Embodiment Types
 
-| Type | Name | Description | Example |
-|------|------|-------------|---------|
-| **E1** | Passive data source | Publishes data but accepts no commands | Standalone temperature logger |
-| **E2** | Embedded controller | Microcontroller-based; publishes data and responds to simple commands | A.U.R.A. (ESP32), S.P.A.R.K. (Arduino) |
-| **E3** | Full compute peer | SBC (Single-Board Computer) with full OS; runs application logic | M.I.R.A.G.E. on Jetson, S.T.A.T. on Raspberry Pi |
-| **E4** | Software-only peer | No dedicated hardware; runs on shared compute (laptop, cloud, Docker) | D.A.W.N. on x86 server, E.C.H.O. simulated peers |
-| **E5** | Hybrid peer | Mix of real and simulated interfaces via Provider hot-swap | M.I.R.A.G.E. with real camera but simulated sensors |
+| Type | Embodiment | Description | Examples |
+|------|-----------|-------------|----------|
+| **E1** | Physical | Dedicated hardware with a physical body | M.I.R.A.G.E. on Jetson, A.U.R.A. (ESP32), S.P.A.R.K. (Arduino), S.T.A.T. on RPi, standalone sensors |
+| **E2** | Remote-Physical | Real hardware operated by a remote operator | Wirelessly driven robot suit; dual keepalive (operator + hardware) |
+| **E3** | Digital/Virtual | Virtual body in a game engine, simulation, or visualization | Godot avatar, E.C.H.O. simulated peer, VR character |
+| **E4** | Software-Only | No body — pure service or infrastructure peer | D.A.W.N. running as headless server, LLM routing, session management |
+| **E5** | Hybrid | Spans multiple embodiment types via Provider | Real camera + simulated sensors; physical body + virtual twin |
+
+##### E1 Platform Subtypes
+
+Physical peers (E1) span a wide range of hardware capability. Platform
+subtypes allow finer-grained classification when needed, but all E1 peers
+share the same embodiment — a real, physical presence:
+
+| Subtype | Capability | Examples |
+|---------|-----------|----------|
+| E1a | Passive sensor — publishes data, accepts no commands | Standalone temperature logger, fixed environmental monitor |
+| E1b | Embedded controller — microcontroller with fixed command set | A.U.R.A. (ESP32 sensor array), S.P.A.R.K. (Arduino actuators) |
+| E1c | Full compute — SBC (Single-Board Computer) with full OS | M.I.R.A.G.E. on Jetson, S.T.A.T. on Raspberry Pi |
+
+Platform subtypes are optional metadata. A peer that reports `"embodiment": "E1"`
+without a subtype is valid — the subtype adds detail, not a requirement.
 
 #### OCP Behaviour by Type
 
-- **E1**: Publishes to data topics only. May publish status (retained). Does not subscribe to command topics.
-- **E2**: Publishes data and status. Subscribes to its command topic. Fixed command set defined at compile time.
-- **E3**: Full OCP participation — status with LWT (Last Will and Testament), discovery, command/response, heartbeat (30-second interval, 90-second timeout).
-- **E4**: Same as E3, but `embodiment` field is `"software"`. Simulated peers additionally publish to `echo/discovery/simulates`.
-- **E5**: Same as E3, but discovery message lists which capabilities are simulated vs. real.
+- **E1**: Full OCP participation — status with LWT (Last Will and Testament),
+  discovery, command/response, heartbeat (30-second interval, 90-second timeout).
+  E1a subtypes may publish data only (no command subscription). Peers that omit
+  the `embodiment` field are assumed E1 for backward compatibility.
+- **E2**: Same as E1, plus a secondary keepalive for the remote operator session.
+  Discovery message includes `"operator"` field identifying the controlling entity.
+- **E3**: Same as E1, but `embodiment` field is `"digital"`. Virtual peers
+  additionally publish to `echo/discovery/simulates` so physical peers can
+  distinguish them. Game engine avatars report their host engine and scene.
+- **E4**: Same as E1, but `embodiment` field is `"software"`. No physical or
+  virtual body representation. Publishes to `echo/discovery/simulates`.
+- **E5**: Same as E1, but discovery message lists which capabilities are
+  real vs. simulated. The Provider pattern manages runtime transitions
+  between backing implementations.
 
 #### Status Message Schema Extension
 
@@ -716,26 +744,28 @@ The existing OCP status message gains an optional `embodiment` block:
   "version": "2.1.0",
   "capabilities": ["armor_display", "detect", "map"],
   "embodiment": {
-    "type": "E4",
-    "label": "software",
-    "simulated_capabilities": ["motion", "gps", "environmental"],
-    "real_capabilities": []
+    "type": "E1",
+    "subtype": "E1c",
+    "label": "physical",
+    "real_capabilities": ["armor_display", "detect", "map"],
+    "simulated_capabilities": []
   }
 }
 ```
 
-Peers that omit the `embodiment` block are assumed E3 (full physical). The
-block is most useful for E4 (simulated) and E5 (hybrid) peers.
+Peers that omit the `embodiment` block are assumed E1 (physical) for backward
+compatibility with existing O.A.S.I.S. components. The block is most useful
+for E3 (digital/virtual), E4 (software-only), and E5 (hybrid) peers.
 
-#### Discovery for Simulated Peers
+#### Discovery for Non-Physical Peers
 
-Simulated peers publish to `echo/discovery/simulates` (retained):
+E3 and E4 peers publish to `echo/discovery/simulates` (retained):
 
 ```json
 {
   "peer_id": "echo-aura-simulation",
   "component": "aura",
-  "embodiment": "software",
+  "embodiment": "digital",
   "capabilities": ["motion", "gps", "environmental"],
   "timestamp": 1711148400
 }
@@ -743,17 +773,18 @@ Simulated peers publish to `echo/discovery/simulates` (retained):
 
 This enables consuming components (e.g., M.I.R.A.G.E. HUD status display,
 D.A.W.N. WebUI), the Provider pattern, and test harnesses to distinguish
-simulated peers from physical hardware on the same network.
+physical, virtual, and software-only peers on the same network.
 
 #### Implementation Status
 
 | Type | Status |
 |------|--------|
-| E3 (physical) | Implemented — `Embodiment.E3` in `simulation/layer1/ocp.py` |
-| E4 (software) | Implemented — `Embodiment.E4` in `simulation/layer1/ocp.py` |
-| E1 (passive) | Proposed — pending review |
-| E2 (embedded) | Proposed — pending review |
+| E1 (physical) | Implemented — current `Embodiment.E3` maps to E1 (enum rename pending) |
+| E4 (software) | Implemented — current `Embodiment.E4` maps to E4 |
+| E2 (remote-physical) | Proposed — pending review |
+| E3 (digital/virtual) | Proposed — pending review; needed for Godot OCP plugin |
 | E5 (hybrid) | Proposed — pending review; depends on Provider pattern (implemented) |
+| E1 platform subtypes | Proposed — optional metadata for finer-grained classification |
 | `embodiment` block | Proposed schema — not yet in `OCPPeer` status messages |
 | `echo/discovery/simulates` | Implemented — published by `OCPPeer` and ecosystem demo |
 
@@ -771,7 +802,8 @@ simulated peers from physical hardware on the same network.
 | 2026-03-08 | Malcolm Howard | Renamed file from `0003-hardware-mocking.md` to `0003-simulation-environment-architecture.md`; title updated to match expanded scope |
 | 2026-03-11 | Malcolm Howard | Amendment 3: Accessibility reframing — contributor accessibility identified as primary motivation; software dependency spectrum documented; minimum viable hardware profile (4 GB, no GPU, any OS via Docker) established; Docker distribution path documented; classroom context added |
 | 2026-03-22 | Malcolm Howard | Amendment 4: Runtime injection modes and graceful degradation — three injection phases (default, explicit, runtime); Provider pattern for hot-swap (implemented in `simulation/hal/provider.py`); connection to OCP component discovery; graceful degradation when hardware/services appear or disappear |
-| 2026-03-22 | Malcolm Howard | Amendment 5: OCP Embodiment Spectrum — E1-E5 type definitions, status message schema extension with `embodiment` block, discovery topic for simulated peers; E3/E4 implemented, E1/E2/E5 proposed pending review |
+| 2026-03-22 | Malcolm Howard | Amendment 5: OCP Embodiment Spectrum — initial E1-E5 type definitions |
+| 2026-03-28 | Malcolm Howard | Amendment 5 revised: reframed spectrum around relationship to physical reality (not platform capability); E1=Physical (with E1a/b/c subtypes), E2=Remote-Physical (new), E3=Digital/Virtual (new — Godot avatars, simulated peers), E4=Software-Only, E5=Hybrid; backward compatible (omitting embodiment field = E1) |
 | TBD | Kris Kersey | Review and name selection |
 | TBD | TBD | ADR approved, status changed to Accepted |
 
