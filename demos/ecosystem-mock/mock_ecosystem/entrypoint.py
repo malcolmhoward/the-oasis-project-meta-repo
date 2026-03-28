@@ -155,6 +155,71 @@ def main():
     llm_server.start()
     print(f"  LLM mock: http://0.0.0.0:{llm_port}")
 
+    # --- Mock DAWN responder (listens on MQTT, responds via LLM mock) ---
+    def on_dawn_message(mqtt_client, userdata, msg):
+        try:
+            payload = json.loads(msg.payload.decode())
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return
+
+        # Extract user text from different message formats
+        text = payload.get("value", payload.get("text", ""))
+        if not text or payload.get("device") == "echo-dawn-simulation":
+            return  # Ignore empty messages and our own responses
+
+        print(f"  [DAWN mock] Received: {text}")
+
+        # Check for tool call first
+        tool_result = llm.tool_call(text)
+        if tool_result is not None:
+            # Execute tool call against HA mock
+            tool_name = tool_result.get("tool", "")
+            tool_args = tool_result.get("args", {})
+            response_text = f"Executing {tool_name}: {tool_args.get('action', '')} on {tool_args.get('entity_id', '')}"
+
+            if tool_name == "homeassistant":
+                action = tool_args.get("action", "")
+                entity_id = tool_args.get("entity_id", "")
+                if action and entity_id:
+                    ha.call_service(action.replace("turn_", ""), action, {"entity_id": entity_id})
+                    state = ha.get_state(entity_id)
+                    if state:
+                        response_text = f"Done. {state['attributes'].get('friendly_name', entity_id)} is now {state['state']}."
+
+            print(f"  [DAWN mock] Tool call: {tool_result}")
+        else:
+            # Regular text response
+            response_text = llm.complete(text)
+
+        # Publish response back to dawn topic
+        mqtt_client.publish("dawn", json.dumps({
+            "device": "echo-dawn-simulation",
+            "action": "speak",
+            "value": response_text,
+            "timestamp": int(time.time()),
+        }))
+        print(f"  [DAWN mock] Response: {response_text}")
+
+    def on_any_message(mqtt_client, userdata, msg):
+        if msg.topic == "dawn":
+            on_dawn_message(mqtt_client, userdata, msg)
+
+    client.on_message = on_any_message
+    client.subscribe("dawn")
+    print(f"  DAWN mock responder: listening on 'dawn' topic")
+
+    # Register DAWN as an OCP peer
+    dawn_peer = OCPPeer(
+        client=client,
+        peer_id="echo-dawn-simulation",
+        component="dawn",
+        embodiment=Embodiment.E4,
+        capabilities=["conversation", "tool_execution", "reasoning"],
+        version="0.1.0-simulation",
+    )
+    dawn_peer.start()
+    print(f"  OCP peer online: {dawn_peer.peer_id} (dawn)")
+
     print(f"\nO.A.S.I.S. ecosystem simulation ready.")
     print(f"  MQTT broker: {broker}:{port}")
     print(f"  OCP peers: echo-aura-simulation, echo-stat-simulation, echo-scope-simulation")
@@ -165,7 +230,7 @@ def main():
     # --- Wait for shutdown ---
     def shutdown(signum, frame):
         print("\nShutting down ecosystem simulation...")
-        for peer in [aura_peer, stat_peer, scope_peer]:
+        for peer in [aura_peer, stat_peer, scope_peer, dawn_peer]:
             peer.stop()
         llm_server.stop()
         ha.stop()

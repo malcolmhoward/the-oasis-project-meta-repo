@@ -26,3 +26,6 @@
 [submodule "repos/stat"]
 	path = repos/stat
 	url = https://github.com/malcolmhoward/stat.git
+[submodule "repos/game-engine-plugin"]
+	path = repos/game-engine-plugin
+	url = https://github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo.git
