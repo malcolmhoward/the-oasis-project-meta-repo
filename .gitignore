@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+vendor/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.coverage
+.pytest_cache/
+
+# Project specific
+# [ADD YOUR PROJECT'S SPECIFIC IGNORES HERE]
