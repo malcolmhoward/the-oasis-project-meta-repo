@@ -122,14 +122,16 @@ scope/
 │   └── jetson-nx/              # Jetson setup guide (planned)
 ├── journey/                    # Community build stories (planned)
 ├── repos/                      # Component submodules
-│   ├── mirage/
-│   ├── dawn/
-│   ├── spark/
 │   ├── aura/
 │   ├── beacon/
+│   ├── dawn/
+│   ├── game-engine-plugin/
 │   ├── genesis/
-│   ├── stat/
-│   └── project-foundation-template/
+│   ├── github-pages/
+│   ├── mirage/
+│   ├── project-foundation-template/
+│   ├── spark/
+│   └── stat/
 └── scripts/                    # Automation scripts (planned)
 ```
 

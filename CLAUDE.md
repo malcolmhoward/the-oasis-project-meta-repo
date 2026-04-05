@@ -45,6 +45,9 @@ Available as submodules under `repos/`:
 | BEACON | CAD models | N/A | 3D printing |
 | GENESIS | Python utilities | Python | N/A |
 | S.T.A.T. | System telemetry | C | I2C power monitors, BMS |
+| Game Engine Plugin | OCP client for Godot 4.5 | GDScript | N/A (software) |
+| Simulation Framework | Simulation framework (E.C.H.O. candidate) | Python | N/A (mocks hardware) |
+| GitHub Pages | Documentation site | Jekyll | N/A |
 
 ## Cross-Repo Relationships
 

@@ -39,8 +39,18 @@ The key criteria are therefore: **thematic cohesion with O.A.S.I.S.**, a **fun a
 | B.E.A.C.O.N. | Build Environment and Component Organization Node |
 | G.E.N.E.S.I.S. | General Embedded Node for Ecosystem Support and Integration Scripts |
 | S.C.O.P.E. | System Coordination, Orchestration, Planning & Execution |
+| S.T.A.T. | System Telemetry and Analysis Toolkit |
 
-An observer may notice that many of these names evoke natural or atmospheric phenomena, but Kris has not described this as a deliberate constraint — it is a characteristic of the existing set, not a stated requirement for new names.
+### Components Pending Naming
+
+These components use temporary descriptive names pending the project lead's selection of official O.A.S.I.S. acronyms:
+
+| Temporary Name | Repo | Purpose | Candidate Names |
+|----------------|------|---------|-----------------|
+| Simulation Framework | the-oasis-project-simulation-repo | Hardware, protocol, and service simulation | E.C.H.O. is the leading candidate per [ADR-0003](0003-simulation-environment-architecture.md) |
+| Game Engine Plugin | the-oasis-project-game-engine-plugin-repo | OCP client plugin for game engines (Godot 4.5) | No candidates proposed yet — see [meta-issue #43](https://github.com/malcolmhoward/the-oasis-project-meta-repo/issues/43) |
+
+An observer may notice that many of these names evoke natural or atmospheric phenomena, but the project lead has not described this as a deliberate constraint — it is a characteristic of the existing set, not a stated requirement for new names.
 
 ### Why This Matters for New Components
 
