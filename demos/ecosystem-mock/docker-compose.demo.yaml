@@ -1,0 +1,79 @@
+# O.A.S.I.S. Ecosystem Simulation Demo
+#
+# Runs the full O.A.S.I.S. ecosystem with all components simulated:
+#   - Simulated A.U.R.A. sensors (motion, GPS, environmental)
+#   - Simulated S.T.A.T. system metrics (CPU, memory, battery)
+#   - OCP E4 software peers (A.U.R.A., S.T.A.T., S.C.O.P.E.)
+#   - Home Assistant mock (smart home entity control)
+#   - LLM mock (OpenAI-compatible keyword → tool call mapping)
+#   - MQTT broker (shared network for all components)
+#
+# Optionally add D.A.W.N. and/or M.I.R.A.G.E. to the network by
+# running their own demo compose files with the same MQTT broker.
+#
+# Usage:
+#   docker compose -f demos/ecosystem-mock/docker-compose.demo.yaml up --build
+#
+# No GPU, no API keys, no external services required.
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/broker/uptime' -C 1 -W 3"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  mock-ecosystem:
+    build:
+      context: .
+      dockerfile: mock_ecosystem/Dockerfile
+    environment:
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - HA_PORT=8123
+      - LLM_PORT=8080
+      - PUBLISH_INTERVAL=1.0
+    ports:
+      - "8123:8123"
+      - "8080:8080"
+    depends_on:
+      mqtt-broker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/v1/models')\""]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # --- Optional: Add real D.A.W.N. to the simulated ecosystem ---
+  # Uncomment this section if you have built the D.A.W.N. Docker image.
+  # D.A.W.N. connects to the mock services and displays in its WebUI.
+  #
+  # dawn:
+  #   image: dawn:dev
+  #   volumes:
+  #     - ../repos/dawn/demos/full-mock/dawn-simulation.toml:/opt/dawn/dawn.toml:ro
+  #     - ../repos/dawn/demos/full-mock/secrets-simulation.toml:/opt/dawn/secrets.toml:ro
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     mqtt-broker:
+  #       condition: service_healthy
+  #     mock-ecosystem:
+  #       condition: service_healthy
+  #   environment:
+  #     - DAWN_LLM_TYPE=local
+  #     - DAWN_LLM_LOCAL_ENDPOINT=http://mock-ecosystem:8080
+  #     - DAWN_LLM_LOCAL_PROVIDER=generic
+  #     - DAWN_MQTT_BROKER=mqtt-broker
+  #     - DAWN_HOMEASSISTANT_URL=http://mock-ecosystem:8123
+  #     - DAWN_AUDIO_ENABLED=false
+  #     - DAWN_ASR_ENABLED=false
+  #     - DAWN_TTS_ENABLED=false

@@ -83,6 +83,8 @@ O.A.S.I.S. (Open-source Assistive System for Integrated Services) is an open-sou
 | [BEACON](https://github.com/The-OASIS-Project/beacon) | CAD models and designs | N/A |
 | [GENESIS](https://github.com/The-OASIS-Project/genesis) | Python utilities | Python |
 | [S.T.A.T.](https://github.com/The-OASIS-Project/stat) | System telemetry and power monitoring | C |
+| [E.C.H.O.](https://github.com/malcolmhoward/the-oasis-project-simulation-repo) | Simulation framework (Device/Network/Platform mocks) | Python |
+| [Game Engine Plugin](https://github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo) | OCP plugin for game engines (Godot 4.6) | GDScript |
 
 All component repositories are available as submodules under `repos/`.
 
@@ -120,14 +122,16 @@ scope/
 │   └── jetson-nx/              # Jetson setup guide (planned)
 ├── journey/                    # Community build stories (planned)
 ├── repos/                      # Component submodules
-│   ├── mirage/
-│   ├── dawn/
-│   ├── spark/
 │   ├── aura/
 │   ├── beacon/
+│   ├── dawn/
+│   ├── game-engine-plugin/
 │   ├── genesis/
-│   ├── stat/
-│   └── project-foundation-template/
+│   ├── github-pages/
+│   ├── mirage/
+│   ├── project-foundation-template/
+│   ├── spark/
+│   └── stat/
 └── scripts/                    # Automation scripts (planned)
 ```
 
