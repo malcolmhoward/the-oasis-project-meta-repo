@@ -17,12 +17,18 @@ This is a **coordination repository**, not a code repository. It will:
 Currently implemented:
 - Component repository submodules under `repos/`
 - This LLM integration guide (`CLAUDE.md`)
+- Directory structure for coordination
 
-Planned directories (coming soon):
+Existing directories (content coming soon):
 - `coordination/roadmaps/` - Per-repo development roadmaps
 - `coordination/dependencies/` - Cross-repo dependency documentation
+- `coordination/decisions/adr/` - Architecture Decision Records
+- `getting-started/` - Platform-specific setup guides (raspberry-pi, orin-nano, jetson-nx)
+- `journey/` - Community build stories
+- `scripts/` - Automation scripts
+
+Planned directories:
 - `coordination/hardware-guides/` - Hardware progression paths
-- `getting-started/` - Platform-specific setup guides
 - `templates/docker/` - Docker configuration templates
 - `templates/oasis-foundation/` - Repository standardization templates
 
