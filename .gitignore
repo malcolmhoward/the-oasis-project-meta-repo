@@ -13,6 +13,7 @@ env/
 .idea/
 .vscode/
 *.swp
+*.swo
 
 # OS
 .DS_Store
@@ -32,6 +33,10 @@ logs/
 coverage/
 .coverage
 .pytest_cache/
+
+# Claude working files
+docs/claude/scratch/
+scratch/
 
 # Project specific
 # [ADD YOUR PROJECT'S SPECIFIC IGNORES HERE]
