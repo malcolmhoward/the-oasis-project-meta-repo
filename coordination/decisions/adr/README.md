@@ -73,7 +73,7 @@ Each ADR follows this structure:
 |-----|-------|--------|------|
 | [0001](0001-project-governance.md) | Project Governance | Proposed | TBD |
 | [0002](0002-github-infrastructure.md) | GitHub Infrastructure Standards | Proposed | TBD |
-| [0003](0003-hardware-mocking.md) | Hardware Mocking | Proposed | TBD |
+| [0003](0003-simulation-environment-architecture.md) | Simulation Environment Architecture | Proposed | TBD |
 | [0004](0004-documentation-infrastructure.md) | Documentation Infrastructure | Proposed | TBD |
 | [0005](0005-dockerfile-independence.md) | Independent Dockerfiles Per Platform | Proposed | TBD |
 | [0006](0006-container-model-availability-strategy.md) | Model Availability Strategy for Containerized Components | Proposed | TBD |
